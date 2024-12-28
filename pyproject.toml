@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kiwiutils"
-version = "0.1.0"
+version = "0.1.1"
 description = "Misc utilities"
 authors = ["aaron-sandoval <32021231+aaron-sandoval@users.noreply.github.com>"]
 license = "MIT"
