@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "kiwiutils"
+version = "0.1.0"
+description = "Misc utilities"
+authors = ["aaron-sandoval <32021231+aaron-sandoval@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4"
+pandas = ">=1.5.2, <3"
+aenum = "^3.1.15"
+yamlable = "^1.1.1"
+portion = "^2.4.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.1.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

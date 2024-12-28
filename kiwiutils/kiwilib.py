@@ -4,22 +4,36 @@ Container for misc code usable across projects.
 """
 import abc
 import functools
-import itertools
 import datetime
 import math
 from enum import EnumMeta, Enum
-import aenum
+from dataclasses import fields as dataclass_fields, dataclass
 from collections import defaultdict
 from functools import lru_cache
+import copy
+from typing import (
+    Union,
+    TypeVar,
+    Type, 
+    Any, 
+    Iterable, 
+    Tuple, 
+    List, 
+    Generator, 
+    Dict, 
+    Callable, 
+    Optional, 
+    Protocol, 
+    ClassVar, 
+    Set
+)
+
+import aenum
 import portion
 from pandas.core.dtypes.inference import is_list_like
-import copy
-from typing import \
-    Union, TypeVar, Type, Any, Iterable, Tuple, List, Generator, Dict, Callable, Optional, Protocol, ClassVar, Set
 import pandas as pd
 import numpy as np
 from yamlable import YamlCodec
-from dataclasses import fields as dataclass_fields, dataclass
 
 
 def kiwiTest():
