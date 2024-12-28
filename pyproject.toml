@@ -12,6 +12,7 @@ pandas = ">=1.5.2, <3"
 aenum = "^3.1.15"
 yamlable = "^1.1.1"
 portion = "^2.4.0"
+frozendict = "^2.4.6"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.1.2"
