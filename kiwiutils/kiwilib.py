@@ -12,20 +12,15 @@ from collections import defaultdict
 from functools import lru_cache
 import copy
 from typing import (
-    Union,
     TypeVar,
     Type, 
     Any, 
     Iterable, 
-    Tuple, 
-    List, 
     Generator, 
-    Dict, 
     Callable, 
     Optional, 
     Protocol, 
     ClassVar, 
-    Set,
     runtime_checkable,
 )
 
@@ -86,7 +81,7 @@ def mapOverListLike(func, listLike: Iterable) -> Iterable:
 
 
 
-def flatten(it: Iterable[Any], levels_to_flatten: int | None = None) -> Generator:
+def flatten(it: Iterable[Any], levels_to_flatten: Optional[int] = None) -> Generator:
     """
     Flattens an arbitrarily nested iterable.
     Flattens all iterable data types except for `str` and `bytes`.
@@ -123,7 +118,7 @@ def is_abstract(cls: type) -> bool:
         return True  # an abstract class
 
 
-def getAllSubclasses(class_: type, includeSelf=False) -> Set[type]:
+def getAllSubclasses(class_: type, includeSelf=False) -> set[type]:
     """
     Returns a set containing all child classes in the subclass graph of `class_`.
     I.e., includes subclasses of subclasses, etc.
@@ -136,7 +131,7 @@ def getAllSubclasses(class_: type, includeSelf=False) -> Set[type]:
     Since most class hierarchies are small, the inefficiencies of the existing recursive implementation aren't problematic.
     It might be valuable to refactor with memoization if the need arises to use this function on a very large class hierarchy.
     """
-    subs: List[Set[type]] = [
+    subs: list[set[type]] = [
         getAllSubclasses(sub, includeSelf=True)
         for sub in class_.__subclasses__()
         if sub is not None
@@ -147,7 +142,7 @@ def getAllSubclasses(class_: type, includeSelf=False) -> Set[type]:
     return subs
 
 
-def leafClasses(cls: type) -> List[type]:
+def leafClasses(cls: type) -> list[type]:
     """
     Returns a list of all leaf subclasses in the hierarchy DAG of cls.
     Leaf subclasses are those which have no subclasses of their own.
@@ -217,7 +212,7 @@ def consolidateIntervalGaps(iv: portion.Interval, minIv) -> portion.Interval:
     return iv.apply(lambda x: x.replace(upper=x.upper-(x.upper-x.lower)) if x.upper-x.lower < minIv else x)
 
 
-def addLineBreaks(s: str, delim: str = ' ', maxLen=None, delimIndices: List[int] = None, insert: int = 0) -> str:
+def addLineBreaks(s: str, delim: str = ' ', maxLen: Optional[int] = None, delimIndices: Optional[list[int]] = None, insert: int = 0) -> str:
     """
     Replaces certain occurences of delim with newlines into a string
     :param s: String to process
@@ -254,7 +249,7 @@ def addLineBreaks(s: str, delim: str = ' ', maxLen=None, delimIndices: List[int]
 @runtime_checkable
 class IsDataclass(Protocol):
     # the most reliable way to ascertain that something is a dataclass
-    __dataclass_fields__: ClassVar[Dict]
+    __dataclass_fields__: ClassVar[dict]
 
 
 def get_hashable_eq_attrs(dc: IsDataclass) -> tuple[Any]:
@@ -315,7 +310,7 @@ class DataclassValuedEnum(abc.ABC, aenum.Enum, metaclass=AenumABCMeta):
 
     @classmethod
     @abc.abstractmethod
-    def _enum_data(cls) -> Dict[Enum, 'Type[DataclassValuedEnum]._DATACLASS']:
+    def _enum_data(cls) -> dict[Enum, 'Type[DataclassValuedEnum]._DATACLASS']:
         """
         Instantiates dataclass members associated with each enum member.
         This method contains the data that would traditionally be located in the enum definitions.
@@ -418,7 +413,7 @@ def date_range_bins(ser: pd.Series, freq: str = 'W', normalize: bool = True, **k
     return pd.cut(circ, right=False, **kwargs)
 
 
-def enum_counts(ser: pd.Series, enumCls: Union[Type[Enum], Iterable[Type[HierarchicalEnum]]]) -> pd.DataFrame:
+def enum_counts(ser: pd.Series, enumCls: type[Enum] | Iterable[type[HierarchicalEnum]]) -> pd.DataFrame:
     """
     Counts the instances of `enumCls` members in a Series of iterables.
     :param ser: Series of Iterable[Any], possibly containing members of `enumCls`.
@@ -426,7 +421,7 @@ def enum_counts(ser: pd.Series, enumCls: Union[Type[Enum], Iterable[Type[Hierarc
     :return: A integer-valued DataFrame with columns as all the members of `enumCls`.
     Data is the count of instances of that enum member in that row in `ser`.
     """
-    def make_count(lst: Iterable, enumCls1: Iterable[type]) -> List[int]:
+    def make_count(lst: Iterable, enumCls1: Iterable[type]) -> list[int]:
         if len(lst) == 0:
             lst.extend([0] * len(enumCls1))
             return lst
@@ -672,7 +667,7 @@ class LinkedMinHeap:
         # a.next = b.next
         # b.next = temp
 
-    def _getNextParent(self, size=None):
+    def _getNextParent(self, size: Optional[int] = None):
         def _getChild(parent, treeSize):
             if treeSize == 0:
                 return None
@@ -787,7 +782,7 @@ class YamlCodecDatetimes(YamlCodec):
         return typ(**dct)
 
     @classmethod
-    def to_yaml_dict(cls, obj) -> Tuple[str, Any]:
+    def to_yaml_dict(cls, obj) -> tuple[str, Any]:
         # Encode the given object and also return the tag that it should have
         return cls.types_to_yaml_tags[type(obj)][0],\
             {key: obj.__getattribute__(key) for key in cls.types_to_yaml_tags[type(obj)][1]
@@ -833,7 +828,7 @@ class YamlCodecMisc(YamlCodec):
         #     return tuple(dct['tupleItems'])
 
     @classmethod
-    def to_yaml_dict(cls, obj) -> Tuple[str, Any]:
+    def to_yaml_dict(cls, obj) -> tuple[str, Any]:
         # Encode the given object and also return the tag that it should have
         if isinstance(obj, portion.Interval):
             return cls.types_to_yaml_tags[type(obj)][0], \
@@ -864,7 +859,7 @@ class Aliasable(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def aliasFuncs(cls) -> Dict[str, Callable[['Aliasable'], str]]:
+    def aliasFuncs(cls) -> dict[str, Callable[['Aliasable'], str]]:
         """
         Defines a map between locale strings, e.g., 'en_US', and Callables returning the localization of an instance.
         Callables must match the API of no-arg methods in a class, taking only a single `self` arg.
@@ -908,7 +903,7 @@ class AliasableEnum(Aliasable, DataclassValuedEnum, metaclass=AenumABCMeta):
     def aliases_to_members_deep(
             cls,
             alias_func: Callable[['AliasableEnum', str], str] = lambda x, loc: x.alias(loc)
-    ) -> Dict[str, 'AliasableEnum']:
+    ) -> dict[str, 'AliasableEnum']:
         """
         Returns a mapping from aliases to enum members for the members of all subclasses of `cls`.
         Warning: In the case of duplicate keys among multiple subclasses,
@@ -942,7 +937,7 @@ class AliasableHierEnum(Aliasable, HierarchicalEnum):
     def aliases_to_members(
             cls,
             alias_func: Callable[['AliasableHierEnum', str], str] = lambda x, loc: x.alias(loc)
-    ) -> Dict[str, 'AliasableHierEnum']:
+    ) -> dict[str, 'AliasableHierEnum']:
         """
         Returns a mapping from aliases to enum members for the members of all subclasses of `cls`.
         Warning: In the case of duplicate keys in the subclass DAG,
@@ -951,7 +946,7 @@ class AliasableHierEnum(Aliasable, HierarchicalEnum):
         """
         out = {alias_func(sub()): sub for sub in getAllSubclasses(cls)}
         if len(out) < len(getAllSubclasses(cls)):
-            subs: Dict[type, str] = {c: c().alias(locale) for c in getAllSubclasses(cls)}
+            subs: dict[type, str] = {c: c().alias(locale) for c in getAllSubclasses(cls)}
             for sub, alias in copy.copy(subs).items():
                 if alias in out:
                     subs.pop(sub)
