@@ -25,7 +25,8 @@ from typing import (
     Optional, 
     Protocol, 
     ClassVar, 
-    Set
+    Set,
+    runtime_checkable,
 )
 
 import aenum
@@ -84,17 +85,28 @@ def mapOverListLike(func, listLike: Iterable) -> Iterable:
     return type(listLike)([func(i) for i in listLike])
 
 
-def flatten(it: Iterable, numLevels: int = pd.NA) -> Generator:
+
+def flatten(it: Iterable[Any], levels_to_flatten: int | None = None) -> Generator:
     """
-    Flattens an arbitrarily nested iterable. Returns a generator over the flattened sequence.
-    :param it: Any arbitrarily nested iterable.
-    :param numLevels: Number of levels to flatten by. Defaults to full flattening.
+    Flattens an arbitrarily nested iterable.
+    Flattens all iterable data types except for `str` and `bytes`.
+
+    # Returns
+    Generator over the flattened sequence.
+
+    # Parameters
+    - `it`: Any arbitrarily nested iterable.
+    - `levels_to_flatten`: Number of levels to flatten by, starting at the outermost layer. If `None`, performs full flattening.
     """
     for x in it:
-        # TODO: swap type check with more general check for __iter__() or __next__() or whatever
-        if isinstance(x, Iterable) and not isinstance(x, (str, bytes, EnumMeta)) and \
-                (pd.isna(numLevels) or numLevels > 0):
-            yield from flatten(x, numLevels-1)
+        if (
+            hasattr(x, "__iter__")
+            and not isinstance(x, (str, bytes))
+            and (levels_to_flatten is None or levels_to_flatten > 0)
+        ):
+            yield from flatten(
+                x, None if levels_to_flatten is None else levels_to_flatten - 1
+            )
         else:
             yield x
 
@@ -153,7 +165,7 @@ def leafClasses(cls: type) -> List[type]:
 def is_locally_defined(class_: type, binding: str) -> bool:
     """
     Returns True if `binding` is a class variable uniquely defined in `class_` as opposed to inherited.
-    If the value assigned to `binding` is defined in `class_` but that values matches tge value in a base class,
+    If the value assigned to `binding` is defined in `class_` but that values matches the value in a base class,
     it also returns True.
     """
     return hasattr(class_, binding) and \
@@ -239,9 +251,35 @@ def addLineBreaks(s: str, delim: str = ' ', maxLen=None, delimIndices: List[int]
         # return '\n'.join([delim.join([])])
 
 
+@runtime_checkable
 class IsDataclass(Protocol):
     # the most reliable way to ascertain that something is a dataclass
     __dataclass_fields__: ClassVar[Dict]
+
+
+def get_hashable_eq_attrs(dc: IsDataclass) -> tuple[Any]:
+    """Returns a tuple of all fields used for equality comparison, including the type of the dataclass itself.
+    The type is included to preserve the unequal equality behavior of instances of different dataclasses whose fields are identical.
+    Essentially used to generate a hashable dataclass representation for equality comparison even if it's not frozen.
+    """
+    return *(
+        getattr(dc, fld.name)
+        for fld in filter(lambda x: x.compare, dc.__dataclass_fields__.values())
+    ), type(dc)
+
+
+def dataclass_set_equals(
+    coll1: Iterable[IsDataclass], coll2: Iterable[IsDataclass]
+) -> bool:
+    """Compares 2 collections of dataclass instances as if they were sets.
+    Duplicates are ignored in the same manner as a set.
+    Unfrozen dataclasses can't be placed in sets since they're not hashable.
+    Collections of them may be compared using this function.
+    """
+
+    return {get_hashable_eq_attrs(x) for x in coll1} == {
+        get_hashable_eq_attrs(y) for y in coll2
+    }
 
 
 _T = TypeVar('_T')
@@ -845,8 +883,8 @@ class Aliasable(abc.ABC):
 
     @staticmethod
     def initAliasable(cls_: type):
-        cls_._aliasFuncs: Dict[str, Callable] = cls_.aliasFuncs()
-        cls_._defaultLocale: str = next(iter(cls_._aliasFuncs.keys()))
+        cls_._aliasFuncs = cls_.aliasFuncs()
+        cls_._defaultLocale = next(iter(cls_._aliasFuncs.keys()))
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)

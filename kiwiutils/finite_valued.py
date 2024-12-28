@@ -1,3 +1,7 @@
+"""
+This module contains utilities related to finite-valued types.
+"""
+
 from typing import (
     TypeVar,
     Callable,
@@ -14,7 +18,7 @@ from dataclasses import Field
 import itertools
 
 import enum
-from frozendict import frozendict
+import frozendict
 
 from kiwiutils.kiwilib import IsDataclass, flatten, is_abstract
 
